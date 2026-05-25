@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "brands": "Marcas",
+    "solutions": "Soluciones",
+    "products": "Productos",
+    "about": "Nosotros",
+    "contact": "Contacto",
+    "quote": "Solicitar Cotización",
+    "cart": "Carrito"
+  },
+  "hero": {
+    "badge": "Distribuidores certificados B2B",
+    "title": "Tecnología enterprise",
+    "titleHighlight": "que impulsa tu negocio",
+    "subtitle": "Cisco, Fortinet, Aruba, HPE, Lenovo y más. Precios escalonados por volumen, soporte técnico especializado y entrega express en CDMX.",
+    "ctaPrimary": "Ver marcas",
+    "ctaSecondary": "Solicitar cotización",
+    "statsYears": "años de experiencia",
+    "statsBrands": "marcas líderes",
+    "statsDelivery": "Entrega express CDMX"
+  },
+  "brands": {
+    "title": "Marcas que distribuimos",
+    "subtitle": "Somos distribuidores autorizados de las principales marcas de tecnología enterprise.",
+    "viewAll": "Ver todas las marcas",
+    "viewProducts": "Ver productos",
+    "partner": "Partner certificado"
+  },
+  "solutions": {
+    "title": "¿Qué necesitas resolver?",
+    "subtitle": "Encuentra la solución ideal para tu empresa por categoría tecnológica.",
+    "viewAll": "Ver todas las soluciones",
+    "explore": "Explorar"
+  },
+  "products": {
+    "addToCart": "Agregar al carrito",
+    "quoteWhatsapp": "Cotizar por WhatsApp",
+    "listPrice": "Precio de lista",
+    "pricePerUnit": "c/u",
+    "viewDetail": "Ver detalle",
+    "priceTiers": "Precios por volumen",
+    "condition": {
+      "new": "Nuevo",
+      "refurbished": "Seminuevo",
+      "used": "Usado"
+    },
+    "filterBrand": "Marca",
+    "filterSolution": "Solución",
+    "filterCondition": "Condición",
+    "featured": "Destacado",
+    "bestseller": "Más vendido"
+  },
+  "trust": {
+    "years": "+10 años en el mercado",
+    "yearsDesc": "Una década de experiencia en distribución de tecnología enterprise.",
+    "certified": "Partners certificados",
+    "certifiedDesc": "Distribuidores autorizados de Cisco, Fortinet, Aruba, HPE y más.",
+    "delivery": "Entrega express CDMX",
+    "deliveryDesc": "Recibe tu equipo en horas dentro de la Ciudad de México.",
+    "support": "Soporte técnico",
+    "supportDesc": "Asesoría especializada antes y después de tu compra."
+  },
+  "cart": {
+    "title": "Mi cotización",
+    "empty": "Tu carrito está vacío",
+    "emptyDesc": "Agrega productos para solicitar una cotización.",
+    "subtotal": "Subtotal",
+    "total": "Total estimado",
+    "quantity": "Cantidad",
+    "remove": "Eliminar",
+    "sendWhatsapp": "Enviar cotización por WhatsApp",
+    "sendingLead": "Registrando solicitud...",
+    "customerInfo": "Tus datos",
+    "name": "Nombre completo",
+    "company": "Empresa",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "rfc": "RFC (opcional)",
+    "notes": "Notas adicionales (opcional)",
+    "required": "Campo requerido",
+    "success": "¡Solicitud enviada!",
+    "successDesc": "Tu cotización fue registrada. Te contactaremos a la brevedad."
+  },
+  "contact": {
+    "title": "Contáctanos",
+    "subtitle": "¿Tienes un proyecto en mente? Nuestro equipo de especialistas está listo para asesorarte.",
+    "name": "Nombre",
+    "company": "Empresa",
+    "email": "Correo",
+    "phone": "Teléfono",
+    "message": "Mensaje",
+    "send": "Enviar mensaje",
+    "whatsapp": "Chatear por WhatsApp",
+    "address": "Ciudad de México, México",
+    "hours": "Lun–Vie 9:00–18:00"
+  },
+  "footer": {
+    "description": "Distribuidores certificados de tecnología enterprise. Más de una década conectando empresas con las mejores marcas del mercado.",
+    "brands": "Marcas",
+    "solutions": "Soluciones",
+    "company": "Empresa",
+    "about": "Sobre nosotros",
+    "contact": "Contacto",
+    "blog": "Blog",
+    "legal": "Legal",
+    "privacy": "Política de privacidad",
+    "terms": "Términos y condiciones",
+    "returns": "Devoluciones",
+    "rights": "Todos los derechos reservados."
+  }
+}

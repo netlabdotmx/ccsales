@@ -1,0 +1,111 @@
+{
+  "nav": {
+    "brands": "Brands",
+    "solutions": "Solutions",
+    "products": "Products",
+    "about": "About",
+    "contact": "Contact",
+    "quote": "Request Quote",
+    "cart": "Cart"
+  },
+  "hero": {
+    "badge": "Certified B2B Distributors",
+    "title": "Enterprise technology",
+    "titleHighlight": "that powers your business",
+    "subtitle": "Cisco, Fortinet, Aruba, HPE, Lenovo and more. Volume pricing tiers, specialized technical support and express delivery in CDMX.",
+    "ctaPrimary": "View brands",
+    "ctaSecondary": "Request a quote",
+    "statsYears": "years of experience",
+    "statsBrands": "leading brands",
+    "statsDelivery": "Express delivery CDMX"
+  },
+  "brands": {
+    "title": "Brands we distribute",
+    "subtitle": "We are authorized distributors of the leading enterprise technology brands.",
+    "viewAll": "View all brands",
+    "viewProducts": "View products",
+    "partner": "Certified partner"
+  },
+  "solutions": {
+    "title": "What do you need to solve?",
+    "subtitle": "Find the ideal solution for your company by technology category.",
+    "viewAll": "View all solutions",
+    "explore": "Explore"
+  },
+  "products": {
+    "addToCart": "Add to cart",
+    "quoteWhatsapp": "Quote via WhatsApp",
+    "listPrice": "List price",
+    "pricePerUnit": "ea.",
+    "viewDetail": "View detail",
+    "priceTiers": "Volume pricing",
+    "condition": {
+      "new": "New",
+      "refurbished": "Refurbished",
+      "used": "Used"
+    },
+    "filterBrand": "Brand",
+    "filterSolution": "Solution",
+    "filterCondition": "Condition",
+    "featured": "Featured",
+    "bestseller": "Best seller"
+  },
+  "trust": {
+    "years": "+10 years in the market",
+    "yearsDesc": "A decade of experience in enterprise technology distribution.",
+    "certified": "Certified partners",
+    "certifiedDesc": "Authorized distributors of Cisco, Fortinet, Aruba, HPE and more.",
+    "delivery": "Express delivery CDMX",
+    "deliveryDesc": "Receive your equipment within hours in Mexico City.",
+    "support": "Technical support",
+    "supportDesc": "Specialized advice before and after your purchase."
+  },
+  "cart": {
+    "title": "My Quote",
+    "empty": "Your cart is empty",
+    "emptyDesc": "Add products to request a quote.",
+    "subtotal": "Subtotal",
+    "total": "Estimated total",
+    "quantity": "Qty",
+    "remove": "Remove",
+    "sendWhatsapp": "Send quote via WhatsApp",
+    "sendingLead": "Registering request...",
+    "customerInfo": "Your information",
+    "name": "Full name",
+    "company": "Company",
+    "email": "Email address",
+    "phone": "Phone",
+    "rfc": "Tax ID (optional)",
+    "notes": "Additional notes (optional)",
+    "required": "Required field",
+    "success": "Request sent!",
+    "successDesc": "Your quote was registered. We will contact you shortly."
+  },
+  "contact": {
+    "title": "Contact us",
+    "subtitle": "Have a project in mind? Our team of specialists is ready to advise you.",
+    "name": "Name",
+    "company": "Company",
+    "email": "Email",
+    "phone": "Phone",
+    "message": "Message",
+    "send": "Send message",
+    "whatsapp": "Chat on WhatsApp",
+    "address": "Mexico City, Mexico",
+    "hours": "Mon–Fri 9:00–18:00"
+  },
+  "footer": {
+    "description": "Certified enterprise technology distributors. Over a decade connecting businesses with the best brands in the market.",
+    "brands": "Brands",
+    "solutions": "Solutions",
+    "company": "Company",
+    "about": "About us",
+    "contact": "Contact",
+    "blog": "Blog",
+    "legal": "Legal",
+    "privacy": "Privacy policy",
+    "terms": "Terms and conditions",
+    "returns": "Returns",
+    "rights": "All rights reserved."
+  }
+}
