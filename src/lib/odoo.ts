@@ -1,6 +1,9 @@
 /**
  * Odoo JSON-RPC client — server-side only.
  * Credentials are read from env vars and never exposed to the browser.
+ *
+ * Uses the /jsonrpc endpoint (service=object, method=execute_kw) which
+ * accepts UID + API key directly — no session cookie needed.
  */
 
 import type {
@@ -13,28 +16,37 @@ import type {
 
 const ODOO_URL = process.env.ODOO_URL ?? "";
 const ODOO_DB  = process.env.ODOO_DB  ?? "";
+const ODOO_UID = Number(process.env.ODOO_UID ?? "2");
 const ODOO_API_KEY = process.env.ODOO_API_KEY ?? "";
 
 // ─── Core RPC ────────────────────────────────────────────────
 
 async function rpc<T>(
-  endpoint: string,
   model: string,
   method: string,
   args: unknown[],
-  kwargs: Record<string, unknown> = {}
+  kwargs: Record<string, unknown> = {},
 ): Promise<T> {
-  const res = await fetch(`${ODOO_URL}${endpoint}`, {
+  const res = await fetch(`${ODOO_URL}/jsonrpc`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(ODOO_API_KEY ? { Authorization: `Bearer ${ODOO_API_KEY}` } : {}),
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       jsonrpc: "2.0",
       method: "call",
       id: 1,
-      params: { model, method, args, kwargs: { ...kwargs, context: { lang: "es_MX" } } },
+      params: {
+        service: "object",
+        method: "execute_kw",
+        args: [
+          ODOO_DB,
+          ODOO_UID,
+          ODOO_API_KEY,
+          model,
+          method,
+          args,
+          { ...kwargs, context: { lang: "es_MX" } },
+        ],
+      },
     }),
     cache: "no-store",
   });
@@ -80,7 +92,7 @@ function mapProduct(raw: OdooRawProduct): Product {
     priceTiers:       [],   // fetched separately via getProductPriceTiers
     imageUrl:         odooImageUrl("product.template", raw.id, "image_1920"),
     condition:        raw.cc_condition || "new",
-    stock:            raw.qty_available ?? 0,
+    stock:            999,  // qty_available not available via jsonrpc on product.template
     featured:         raw.cc_featured,
     specs,
   };
@@ -92,7 +104,7 @@ const PRODUCT_FIELDS = [
   "id", "name", "default_code", "description_sale",
   "cc_short_description", "list_price",
   "cc_brand_id", "cc_store_ids", "cc_price_tier_ids",
-  "cc_featured", "cc_condition", "cc_specs", "qty_available",
+  "cc_featured", "cc_condition", "cc_specs",
 ];
 
 // ─── Public API ───────────────────────────────────────────────
@@ -111,7 +123,6 @@ export async function searchProducts(params: {
   const domain = [...baseDomain, ...(params.domain ?? [])];
 
   const raw = await rpc<OdooRawProduct[]>(
-    "/web/dataset/call_kw",
     "product.template",
     "search_read",
     [domain],
@@ -133,7 +144,6 @@ export async function countProducts(domain: unknown[] = []): Promise<number> {
     ["sale_ok", "=", true],
   ];
   return rpc<number>(
-    "/web/dataset/call_kw",
     "product.template",
     "search_count",
     [[...baseDomain, ...domain]],
@@ -143,7 +153,6 @@ export async function countProducts(domain: unknown[] = []): Promise<number> {
 /** Fetch a single product by id */
 export async function getProduct(id: number): Promise<Product | null> {
   const raw = await rpc<OdooRawProduct[]>(
-    "/web/dataset/call_kw",
     "product.template",
     "read",
     [[id]],
@@ -155,7 +164,6 @@ export async function getProduct(id: number): Promise<Product | null> {
 /** Fetch price tiers for a product */
 export async function getProductPriceTiers(productId: number): Promise<PriceTier[]> {
   const raw = await rpc<OdooRawPriceTier[]>(
-    "/web/dataset/call_kw",
     "product.price.tier",
     "search_read",
     [[["product_tmpl_id", "=", productId]]],
@@ -167,7 +175,6 @@ export async function getProductPriceTiers(productId: number): Promise<PriceTier
 /** Fetch all brands from Odoo */
 export async function getBrands(): Promise<OdooRawBrand[]> {
   return rpc<OdooRawBrand[]>(
-    "/web/dataset/call_kw",
     "product.brand",
     "search_read",
     [[]],
@@ -185,7 +192,6 @@ export async function createLead(values: {
   description: string;
 }): Promise<number> {
   return rpc<number>(
-    "/web/dataset/call_kw",
     "crm.lead",
     "create",
     [{ ...values, type: "lead" }],
