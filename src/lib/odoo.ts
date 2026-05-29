@@ -40,6 +40,26 @@ async function rpc<T>(endpoint: string, payload: JsonRpcPayload): Promise<T> {
   return json.result as T;
 }
 
+/** Campos base de producto para listados */
+const PRODUCT_LIST_FIELDS = [
+  "id", "name", "default_code", "description_sale",
+  "list_price", "categ_id", "image_128",
+  // Campos del módulo cc_store_channels
+  "cc_store_ids", "cc_brand_id", "cc_price_tier_ids",
+  "cc_featured", "cc_condition", "cc_short_description", "cc_specs",
+  "qty_available",
+] as const;
+
+/** Campos completos de producto para detalle */
+const PRODUCT_DETAIL_FIELDS = [
+  "id", "name", "default_code", "description_sale",
+  "list_price", "categ_id", "image_1920", "product_tag_ids",
+  // Campos del módulo cc_store_channels
+  "cc_store_ids", "cc_brand_id", "cc_price_tier_ids",
+  "cc_featured", "cc_condition", "cc_short_description", "cc_specs",
+  "qty_available",
+] as const;
+
 /** Search & read product.template records */
 export async function searchProducts(params: {
   domain?: unknown[];
@@ -55,10 +75,7 @@ export async function searchProducts(params: {
       method: "search_read",
       args: [params.domain ?? []],
       kwargs: {
-        fields: params.fields ?? [
-          "id", "name", "default_code", "description_sale",
-          "list_price", "categ_id", "image_128",
-        ],
+        fields: params.fields ?? [...PRODUCT_LIST_FIELDS],
         limit: params.limit ?? 20,
         offset: params.offset ?? 0,
         order: params.order ?? "id desc",
@@ -76,10 +93,29 @@ export async function getProduct(id: number) {
       method: "read",
       args: [[id]],
       kwargs: {
-        fields: [
-          "id", "name", "default_code", "description_sale",
-          "list_price", "categ_id", "image_1920", "product_tag_ids",
-        ],
+        fields: [...PRODUCT_DETAIL_FIELDS],
+      },
+    },
+  });
+}
+
+/** Fetch price tiers for a product (B2B / ccsales) */
+export async function getProductPriceTiers(productId: number) {
+  return rpc<Array<{
+    id: number;
+    min_qty: number;
+    max_qty: number | false;
+    price: number;
+    label: string;
+  }>>("/web/dataset/call_kw", {
+    method: "call",
+    params: {
+      model: "product.price.tier",
+      method: "search_read",
+      args: [[["product_tmpl_id", "=", productId]]],
+      kwargs: {
+        fields: ["id", "min_qty", "max_qty", "price", "label"],
+        order: "min_qty asc",
       },
     },
   });

@@ -4,13 +4,18 @@ import { searchProducts } from "@/lib/odoo";
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const brand = searchParams.get("brand");
-  const solution = searchParams.get("solution");
+  const featured = searchParams.get("featured");
   const limit = Number(searchParams.get("limit") ?? "20");
   const offset = Number(searchParams.get("offset") ?? "0");
 
   try {
-    const domain: unknown[] = [["sale_ok", "=", true]];
-    if (brand) domain.push(["categ_id.name", "ilike", brand]);
+    // Solo productos activos asignados a la tienda ccsales (B2B)
+    const domain: unknown[] = [
+      ["sale_ok", "=", true],
+      ["cc_store_ids.slug", "=", "ccsales"],
+    ];
+    if (brand) domain.push(["cc_brand_id.slug", "=", brand]);
+    if (featured === "true") domain.push(["cc_featured", "=", true]);
 
     const products = await searchProducts({ domain, limit, offset });
     return NextResponse.json({ data: products });
