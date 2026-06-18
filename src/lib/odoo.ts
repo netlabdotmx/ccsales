@@ -31,20 +31,31 @@ export function odooImageUrl(model: string, id: number, field = "image_1920") {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapProduct(raw: any): Product {
+  const base = ODOO_API;
+  // List endpoint: image_url (relative path). Detail endpoint: images.medium/large
+  const imgMedium = raw.images?.medium
+    ? `${base}${raw.images.medium}`
+    : raw.image_url
+      ? `${base}${raw.image_url}`
+      : odooImageUrl("product.template", raw.id, "image_512");
+  const imgLarge = raw.images?.large
+    ? `${base}${raw.images.large}`
+    : odooImageUrl("product.template", raw.id, "image_1920");
+
   return {
     id:               raw.id,
     name:             raw.name,
-    sku:              raw.sku ?? "",
+    sku:              raw.reference ?? raw.sku ?? "",
     description:      raw.description ?? "",
     shortDescription: raw.short_description ?? "",
     brandId:          raw.brand?.id ?? null,
     brandName:        raw.brand?.name ?? null,
     brandSlug:        raw.brand?.slug ?? null,
-    listPrice:        raw.list_price ?? 0,
+    listPrice:        raw.price ?? raw.list_price ?? 0,
     priceTiers:       (raw.price_tiers ?? []).map(mapPriceTier),
-    imageUrl:         raw.image_url_512  ?? odooImageUrl("product.template", raw.id, "image_512"),
-    imageFullUrl:     raw.image_url_1920 ?? odooImageUrl("product.template", raw.id, "image_1920"),
-    condition:        raw.condition ?? "new",
+    imageUrl:         imgMedium,
+    imageFullUrl:     imgLarge,
+    condition:        raw.condition || "new",
     stock:            raw.stock ?? 999,
     featured:         raw.featured ?? false,
     specs:            raw.specs ?? {},
