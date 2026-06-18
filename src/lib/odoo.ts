@@ -120,8 +120,9 @@ export async function searchProducts(params: SearchParams): Promise<SearchResult
 
 export async function getProduct(id: number): Promise<Product | null> {
   try {
-    const data = await apiFetch<{ product: unknown }>(`/api/products/${id}`);
-    return data.product ? mapProduct(data.product) : null;
+    // The endpoint returns the product object directly (no wrapper key)
+    const data = await apiFetch<Record<string, unknown>>(`/api/products/${id}`);
+    return data.id ? mapProduct(data) : null;
   } catch {
     return null;
   }
