@@ -60,7 +60,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Image */}
-        <div className="relative aspect-square bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
+        <div className="relative aspect-square bg-white rounded-2xl overflow-hidden border border-slate-100">
           <Image
             src={product.imageFullUrl}
             alt={product.name}

@@ -38,7 +38,7 @@ export default function ProductsClient({ brands }: { brands: Brand[] }) {
   function setParam(key: string, value: string) {
     const p = new URLSearchParams(searchParams.toString());
     if (value) p.set(key, value); else p.delete(key);
-    p.delete("page"); // reset pagination on filter change
+    if (key !== "page") p.delete("page"); // reset pagination on filter change
     router.push(`?${p.toString()}`);
   }
 

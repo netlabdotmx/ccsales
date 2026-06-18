@@ -46,7 +46,7 @@ export default function ProductCard({ product }: Props) {
       className="group flex flex-col bg-white rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-lg transition-all duration-300 overflow-hidden"
     >
       {/* Image */}
-      <div className="relative aspect-square bg-slate-50 overflow-hidden">
+      <div className="relative aspect-square bg-white overflow-hidden">
         <Image
           src={product.imageUrl}
           alt={product.name}
