@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { searchProducts } from "@/lib/odoo";
+import { getBrandProducts } from "@/lib/odoo";
 import { solutions, brands as staticBrands } from "@/lib/data";
 import ProductCard from "@/components/products/ProductCard";
 import { Link } from "@/i18n/navigation";
 import { ChevronLeft, BadgeCheck, Package, ShieldCheck, Network, Wifi, Server, HardDrive, Monitor } from "lucide-react";
 import type { Metadata } from "next";
+import type { Product } from "@/types";
 
 const iconMap: Record<string, React.ElementType> = {
   ShieldCheck, Network, Wifi, Server, HardDrive, Monitor,
@@ -29,11 +30,14 @@ export default async function SolucionDetailPage({ params }: Props) {
   const Icon = iconMap[solution.icon] ?? ShieldCheck;
   const relatedBrands = staticBrands.filter((b) => solution.brandSlugs.includes(b.slug));
 
-  // Fetch products from related brands
-  const products = await searchProducts({
-    domain: [["cc_brand_id.slug", "in", solution.brandSlugs]],
-    limit: 48,
-  }).catch(() => []);
+  // Fetch products from related brands (one request per brand, merged)
+  const brandResults = await Promise.allSettled(
+    solution.brandSlugs.map((s) => getBrandProducts(s, { limit: 12 }))
+  );
+  const products: Product[] = brandResults
+    .filter((r) => r.status === "fulfilled")
+    .flatMap((r) => (r as PromiseFulfilledResult<{ products: Product[] }>).value.products)
+    .slice(0, 48);
 
   return (
     <div className="pt-20">

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProductCard from "@/components/products/ProductCard";
 import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
-import type { Product } from "@/types";
+import type { Product, Category } from "@/types";
 
 interface Brand { id: number; name: string; slug: string; }
 
@@ -15,9 +15,22 @@ const CONDITIONS = [
   { value: "used", label: "Usado" },
 ];
 
+const SORT_OPTIONS = [
+  { value: "newest",     label: "Más recientes" },
+  { value: "name",       label: "Nombre A–Z" },
+  { value: "price_asc",  label: "Precio: menor a mayor" },
+  { value: "price_desc", label: "Precio: mayor a menor" },
+];
+
 const PAGE_SIZE = 24;
 
-export default function ProductsClient({ brands }: { brands: Brand[] }) {
+export default function ProductsClient({
+  brands,
+  categories,
+}: {
+  brands: Brand[];
+  categories: Category[];
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -26,11 +39,12 @@ export default function ProductsClient({ brands }: { brands: Brand[] }) {
   const [loading, setLoading] = useState(true);
 
   // Filters from URL
-  const q         = searchParams.get("q") ?? "";
-  const brand     = searchParams.get("brand") ?? "";
+  const q         = searchParams.get("q")         ?? "";
+  const brand     = searchParams.get("brand")     ?? "";
   const condition = searchParams.get("condition") ?? "";
+  const sort      = searchParams.get("sort")      ?? "newest";
+  const categ     = searchParams.get("categ")     ?? "";
   const page      = Number(searchParams.get("page") ?? "1");
-  const offset    = (page - 1) * PAGE_SIZE;
 
   const [localQ, setLocalQ] = useState(q);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -38,7 +52,7 @@ export default function ProductsClient({ brands }: { brands: Brand[] }) {
   function setParam(key: string, value: string) {
     const p = new URLSearchParams(searchParams.toString());
     if (value) p.set(key, value); else p.delete(key);
-    if (key !== "page") p.delete("page"); // reset pagination on filter change
+    if (key !== "page") p.delete("page");
     router.push(`?${p.toString()}`);
   }
 
@@ -49,8 +63,10 @@ export default function ProductsClient({ brands }: { brands: Brand[] }) {
       if (q)         p.set("q", q);
       if (brand)     p.set("brand", brand);
       if (condition) p.set("condition", condition);
+      if (sort)      p.set("sort", sort);
+      if (categ)     p.set("categ", categ);
       p.set("limit", String(PAGE_SIZE));
-      p.set("offset", String(offset));
+      p.set("page",  String(page));
 
       const res = await fetch(`/api/products?${p}`);
       const json = await res.json();
@@ -61,21 +77,33 @@ export default function ProductsClient({ brands }: { brands: Brand[] }) {
     } finally {
       setLoading(false);
     }
-  }, [q, brand, condition, offset]);
+  }, [q, brand, condition, sort, categ, page]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const hasActive = q || brand || condition;
+  const hasActive = q || brand || condition || categ;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-brand-navy mb-1">Catálogo de productos</h1>
-        <p className="text-slate-500 text-sm">
-          {loading ? "Cargando..." : `${total.toLocaleString()} productos disponibles`}
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end gap-4">
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-brand-navy mb-1">Catálogo de productos</h1>
+          <p className="text-slate-500 text-sm">
+            {loading ? "Cargando..." : `${total.toLocaleString()} productos disponibles`}
+          </p>
+        </div>
+        {/* Sort */}
+        <select
+          value={sort}
+          onChange={(e) => setParam("sort", e.target.value)}
+          className="text-sm border border-slate-200 rounded-xl px-3 py-2.5 text-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-green/40 focus:border-brand-green bg-white"
+        >
+          {SORT_OPTIONS.map((s) => (
+            <option key={s.value} value={s.value}>{s.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Search + filter toggle */}
@@ -113,6 +141,34 @@ export default function ProductsClient({ brands }: { brands: Brand[] }) {
       {filtersOpen && (
         <div className="mb-6 p-5 rounded-2xl border border-slate-100 bg-slate-50">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Category filter */}
+            {categories.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Categoría</p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setParam("categ", "")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      !categ ? "bg-brand-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
+                    }`}
+                  >
+                    Todas
+                  </button>
+                  {categories.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setParam("categ", String(c.id))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        categ === String(c.id) ? "bg-brand-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
+                      }`}
+                    >
+                      {c.name} {c.product_count > 0 && <span className="opacity-60">({c.product_count})</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Brand filter */}
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Marca</p>

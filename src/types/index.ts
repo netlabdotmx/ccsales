@@ -1,38 +1,3 @@
-// ─── Raw Odoo shapes ─────────────────────────────────────────
-/** Many2one from Odoo: [id, "Display Name"] | false */
-export type OdooM2O = [number, string] | false;
-
-export interface OdooRawProduct {
-  id: number;
-  name: string;
-  default_code: string | false;
-  description_sale: string | false;
-  cc_short_description: string | false;
-  list_price: number;
-  cc_brand_id: OdooM2O;
-  cc_store_ids: number[];
-  cc_price_tier_ids: number[];
-  cc_featured: boolean;
-  cc_condition: "new" | "refurbished" | "used" | false;
-  cc_specs: string | false; // JSON string
-  qty_available: number;
-}
-
-export interface OdooRawPriceTier {
-  id: number;
-  min_qty: number;
-  max_qty: number | false; // false = sin límite
-  price: number;
-  label: string;
-}
-
-export interface OdooRawBrand {
-  id: number;
-  name: string;
-  slug: string;
-  partner_level: string | false;
-}
-
 // ─── Domain types ────────────────────────────────────────────
 export interface PriceTier {
   id: number;
@@ -40,6 +5,14 @@ export interface PriceTier {
   maxQty: number | null;
   price: number;
   label: string;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  product_count: number;
+  children: Category[];
 }
 
 export interface Product {
@@ -50,7 +23,9 @@ export interface Product {
   shortDescription: string;
   brandId: number | null;
   brandName: string | null;
-  brandSlug: string | null; // will be resolved from brands list
+  brandSlug: string | null;
+  categoryId: number | null;
+  categoryName: string | null;
   listPrice: number;
   priceTiers: PriceTier[];
   imageUrl: string;         // image_512 — tarjetas y listados

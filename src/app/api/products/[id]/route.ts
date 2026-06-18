@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getProduct, getProductPriceTiers } from "@/lib/odoo";
+import { getProduct } from "@/lib/odoo";
 
 export async function GET(
   _req: NextRequest,
@@ -13,16 +13,13 @@ export async function GET(
   }
 
   try {
-    const [product, tiers] = await Promise.all([
-      getProduct(numId),
-      getProductPriceTiers(numId),
-    ]);
+    const product = await getProduct(numId);
 
     if (!product) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: { ...product, priceTiers: tiers } });
+    return NextResponse.json({ data: product });
   } catch (error) {
     console.error("Odoo product detail error:", error);
     return NextResponse.json({ error: "Failed to fetch product" }, { status: 502 });

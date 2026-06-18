@@ -16,7 +16,7 @@ const brandColors: Record<string, string> = {
 };
 
 export default async function MarcasPage() {
-  let oodooBrands: { id: number; name: string; slug: string; partner_level: string | false }[] = [];
+  let oodooBrands: { id: number; name: string; slug: string; partner_level: string | null }[] = [];
   try {
     oodooBrands = await getBrands();
   } catch {
@@ -30,7 +30,7 @@ export default async function MarcasPage() {
         slug: b.slug,
         name: b.name,
         logo: odooImageUrl("product.brand", b.id, "logo"),
-        partnerLevel: b.partner_level || undefined,
+        partnerLevel: b.partner_level ?? undefined,
         color: brandColors[b.slug] ?? "#003845",
         fromOdoo: true,
       }))

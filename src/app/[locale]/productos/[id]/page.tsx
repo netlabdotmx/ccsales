@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getProduct, getProductPriceTiers } from "@/lib/odoo";
+import { getProduct } from "@/lib/odoo";
 import ProductDetailClient from "./ProductDetailClient";
 import type { Metadata } from "next";
 
@@ -27,14 +27,9 @@ export default async function ProductDetailPage({ params }: Props) {
 
   if (isNaN(numId)) notFound();
 
-  const [product, tiers] = await Promise.all([
-    getProduct(numId).catch(() => null),
-    getProductPriceTiers(numId).catch(() => []),
-  ]);
+  const product = await getProduct(numId).catch(() => null);
 
   if (!product) notFound();
 
-  const productWithTiers = { ...product, priceTiers: tiers };
-
-  return <ProductDetailClient product={productWithTiers} />;
+  return <ProductDetailClient product={product} />;
 }

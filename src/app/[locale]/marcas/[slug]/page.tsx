@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getBrands, searchProducts, odooImageUrl } from "@/lib/odoo";
+import { getBrands, getBrandProducts, odooImageUrl } from "@/lib/odoo";
 import { brands as staticBrands } from "@/lib/data";
 import ProductCard from "@/components/products/ProductCard";
 import { Link } from "@/i18n/navigation";
@@ -49,10 +49,8 @@ export default async function MarcaDetailPage({ params }: Props) {
   }
 
   // Fetch products for this brand
-  const products = await searchProducts({
-    domain: [["cc_brand_id.slug", "=", slug]],
-    limit: 48,
-  }).catch(() => []);
+  const result = await getBrandProducts(slug, { limit: 48 }).catch(() => ({ products: [], total: 0, page: 1, pages: 0 }));
+  const products = result.products;
 
   return (
     <div className="pt-20">

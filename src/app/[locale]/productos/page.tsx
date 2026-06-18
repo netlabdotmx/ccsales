@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import ProductsClient from "./ProductsClient";
-import { getBrands } from "@/lib/odoo";
+import { getBrands, getCategories } from "@/lib/odoo";
+import type { Category } from "@/types";
 
 export const metadata = {
   title: "Productos",
@@ -8,10 +9,10 @@ export const metadata = {
 };
 
 export default async function ProductosPage() {
-  // Fetch brands server-side for the filter sidebar
   let brands: { id: number; name: string; slug: string }[] = [];
+  let categories: Category[] = [];
   try {
-    brands = await getBrands();
+    [brands, categories] = await Promise.all([getBrands(), getCategories()]);
   } catch {
     // fallback to empty — client will still work
   }
@@ -19,7 +20,7 @@ export default async function ProductosPage() {
   return (
     <div className="pt-20">
       <Suspense fallback={null}>
-        <ProductsClient brands={brands} />
+        <ProductsClient brands={brands} categories={categories} />
       </Suspense>
     </div>
   );
