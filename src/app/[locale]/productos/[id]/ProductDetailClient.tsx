@@ -62,7 +62,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         {/* Image */}
         <div className="relative aspect-square bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
           <Image
-            src={product.imageUrl}
+            src={product.imageFullUrl}
             alt={product.name}
             fill
             className="object-contain p-8"

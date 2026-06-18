@@ -90,7 +90,8 @@ function mapProduct(raw: OdooRawProduct): Product {
     brandSlug:        null, // resolved by caller if needed
     listPrice:        raw.list_price,
     priceTiers:       [],   // fetched separately via getProductPriceTiers
-    imageUrl:         odooImageUrl("product.template", raw.id, "image_1920"),
+    imageUrl:         odooImageUrl("product.template", raw.id, "image_512"),
+    imageFullUrl:     odooImageUrl("product.template", raw.id, "image_1920"),
     condition:        raw.cc_condition || "new",
     stock:            999,  // qty_available not available via jsonrpc on product.template
     featured:         raw.cc_featured,

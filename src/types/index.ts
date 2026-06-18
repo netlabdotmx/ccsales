@@ -53,7 +53,8 @@ export interface Product {
   brandSlug: string | null; // will be resolved from brands list
   listPrice: number;
   priceTiers: PriceTier[];
-  imageUrl: string;         // Odoo public image URL
+  imageUrl: string;         // image_512 — tarjetas y listados
+  imageFullUrl: string;     // image_1920 — detalle y zoom
   condition: "new" | "refurbished" | "used";
   stock: number;
   featured: boolean;
