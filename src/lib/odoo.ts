@@ -56,7 +56,7 @@ function mapProduct(raw: any): Product {
     imageUrl:         imgMedium,
     imageFullUrl:     imgLarge,
     condition:        raw.condition || "new",
-    stock:            raw.stock ?? 999,
+    stock:            raw.stock_qty ?? (raw.in_stock ? 999 : 0),
     featured:         raw.featured ?? false,
     specs:            raw.specs ?? {},
     categoryId:       raw.category?.id   ?? null,
