@@ -1,57 +1,68 @@
-import { useTranslations } from "next-intl";
-import { brands } from "@/lib/data";
+import { getBrands, odooImageUrl } from "@/lib/odoo";
+import { brands as staticBrands } from "@/lib/data";
+import { Link } from "@/i18n/navigation";
 
-// Brand name text displayed as text blocks since SVGs may not exist yet
 const brandColors: Record<string, string> = {
-  cisco:   "#00BCEB",
-  meraki:  "#00BCEB",
-  fortinet:"#EE3124",
-  aruba:   "#FF6800",
-  hpe:     "#01A982",
-  lenovo:  "#E2231A",
-  extreme: "#7B2D8B",
-  zebra:   "#000000",
+  cisco: "#00BCEB", meraki: "#00BCEB", fortinet: "#EE3124",
+  aruba: "#FF6800", "aruba-hpe": "#FF6800", hpe: "#01A982",
+  lenovo: "#E2231A", extreme: "#7B2D8B", zebra: "#1A1A1A",
 };
 
-export default function BrandsStrip() {
-  const t = useTranslations("brands");
-  // Duplicate for infinite loop
-  const doubled = [...brands, ...brands];
+export default async function BrandsStrip() {
+  const odooBrands = await getBrands().catch(() => []);
+
+  const items = odooBrands.length > 0
+    ? odooBrands.map((b) => ({
+        slug: b.slug,
+        name: b.name,
+        logo: odooImageUrl("product.brand", b.id, "logo"),
+        color: brandColors[b.slug] ?? "#003845",
+      }))
+    : staticBrands.map((b) => ({
+        slug: b.slug,
+        name: b.name,
+        logo: b.logo,
+        color: brandColors[b.slug] ?? "#003845",
+      }));
+
+  // Duplicate for marquee
+  const doubled = [...items, ...items];
 
   return (
-    <section className="bg-white py-14 border-y border-slate-100 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-8 text-center">
+    <section className="bg-white py-12 border-y border-slate-100 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-7 text-center">
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
-          {t("title")}
+          Distribuidores autorizados
         </p>
       </div>
 
       <div className="relative">
-        {/* Fade masks */}
         <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
         <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
 
         <div className="flex animate-marquee gap-0">
           {doubled.map((brand, idx) => (
-            <div
+            <Link
               key={`${brand.slug}-${idx}`}
-              className="flex-shrink-0 mx-8 flex items-center justify-center"
+              href={`/marcas/${brand.slug}` as never}
+              className="flex-shrink-0 mx-4"
             >
-              <div
-                className="px-6 py-3 rounded-xl border border-slate-100 bg-slate-50 hover:border-slate-200 hover:bg-white hover:shadow-sm transition-all duration-200 cursor-default"
-                style={{ minWidth: "140px" }}
-              >
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl border border-slate-100 bg-white hover:border-slate-200 hover:shadow-md transition-all duration-200 group" style={{ minWidth: "160px" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={brand.logo}
+                  alt={brand.name}
+                  className="w-8 h-8 object-contain flex-shrink-0"
+                  onError={undefined}
+                />
                 <span
-                  className="text-sm font-bold tracking-tight"
-                  style={{ color: brandColors[brand.slug] ?? "#64748b" }}
+                  className="text-sm font-bold tracking-tight group-hover:opacity-80 transition-opacity"
+                  style={{ color: brand.color }}
                 >
                   {brand.name}
                 </span>
-                {brand.partnerLevel && (
-                  <p className="text-[10px] text-slate-400 mt-0.5">{t("partner")}</p>
-                )}
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

@@ -6,30 +6,31 @@ import { ArrowRight, BadgeCheck } from "lucide-react";
 
 const brandColors: Record<string, string> = {
   cisco: "#00BCEB", meraki: "#00BCEB", fortinet: "#EE3124",
-  aruba: "#FF6800", hpe: "#01A982", lenovo: "#E2231A",
-  extreme: "#7B2D8B", zebra: "#1A1A1A",
+  aruba: "#FF6800", "aruba-hpe": "#FF6800", hpe: "#01A982",
+  lenovo: "#E2231A", extreme: "#7B2D8B", zebra: "#1A1A1A",
 };
 
 export default async function FeaturedBrands() {
   const t = await getTranslations("brands");
 
-  // Fetch from Odoo, fall back to static
   const odooBrands = await getBrands().catch(() => []);
 
   const featured = odooBrands.length > 0
-    ? odooBrands.slice(0, 4).map((b) => ({
+    ? odooBrands.slice(0, 6).map((b) => ({
         slug: b.slug,
         name: b.name,
         logo: odooImageUrl("product.brand", b.id, "logo"),
-        partnerLevel: b.partner_level || undefined,
+        partnerLevel: b.partner_level ?? undefined,
         description: staticBrands.find((s) => s.slug === b.slug)?.description ?? "",
+        color: brandColors[b.slug] ?? "#003845",
       }))
-    : staticBrands.filter((b) => b.featured).slice(0, 4).map((b) => ({
+    : staticBrands.filter((b) => b.featured).slice(0, 6).map((b) => ({
         slug: b.slug,
         name: b.name,
         logo: b.logo,
         partnerLevel: b.partnerLevel,
         description: b.description,
+        color: brandColors[b.slug] ?? "#003845",
       }));
 
   return (
@@ -50,41 +51,41 @@ export default async function FeaturedBrands() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {featured.map((brand) => (
             <Link
               key={brand.slug}
               href={`/marcas/${brand.slug}` as never}
-              className="group flex flex-col p-6 rounded-2xl border border-slate-100 hover:border-brand-gray-dark hover:shadow-lg transition-all duration-300 bg-white"
+              className="group flex flex-col items-center p-5 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-lg transition-all duration-300 bg-white text-center"
             >
-              {/* Color accent top bar */}
+              {/* Logo */}
+              <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center mb-3 group-hover:bg-white transition-colors">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={brand.logo}
+                  alt={brand.name}
+                  className="w-10 h-10 object-contain"
+                />
+              </div>
+
+              {/* Accent bar */}
               <div
-                className="h-1 rounded-full mb-5 opacity-70 group-hover:opacity-100 transition-opacity"
-                style={{ backgroundColor: brandColors[brand.slug] ?? "#8EE000" }}
+                className="w-8 h-0.5 rounded-full mb-2 opacity-60 group-hover:opacity-100 group-hover:w-12 transition-all duration-300"
+                style={{ backgroundColor: brand.color }}
               />
 
-              {/* Brand name + partner badge */}
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="text-lg font-bold text-brand-navy">{brand.name}</h3>
-                {brand.partnerLevel && (
-                  <BadgeCheck className="w-5 h-5 text-brand-green flex-shrink-0" />
-                )}
-              </div>
+              <h3 className="text-sm font-bold text-brand-navy leading-tight">{brand.name}</h3>
 
               {brand.partnerLevel && (
-                <p className="text-[11px] font-medium text-brand-cyan uppercase tracking-wide mb-3">
-                  {brand.partnerLevel}
-                </p>
+                <div className="flex items-center gap-1 mt-1">
+                  <BadgeCheck className="w-3 h-3 text-brand-green" />
+                  <p className="text-[10px] font-medium text-brand-green uppercase tracking-wide">Partner</p>
+                </div>
               )}
 
-              <p className="text-sm text-slate-500 leading-relaxed line-clamp-3 flex-1">
+              <p className="text-[11px] text-slate-400 mt-2 line-clamp-2 leading-relaxed">
                 {brand.description}
               </p>
-
-              <div className="mt-5 flex items-center gap-1 text-sm font-semibold text-brand-navy group-hover:text-brand-cyan transition-colors">
-                {t("viewProducts")}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
             </Link>
           ))}
         </div>
@@ -92,3 +93,4 @@ export default async function FeaturedBrands() {
     </section>
   );
 }
+

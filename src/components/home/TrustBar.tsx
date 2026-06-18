@@ -1,18 +1,13 @@
-import { useTranslations } from "next-intl";
-import { Award, Truck, Headphones, Clock } from "lucide-react";
+import { Shield, Award, Truck, Headphones } from "lucide-react";
 
-const icons = [Award, Award, Truck, Headphones];
+const items = [
+  { icon: Award,      title: "+15 años",          desc: "Experiencia en tecnología enterprise B2B" },
+  { icon: Shield,     title: "Distribuidor oficial", desc: "Cisco, Fortinet, Aruba HPE y más marcas líderes" },
+  { icon: Truck,      title: "Entrega CDMX",       desc: "Envío express el mismo día en zona metropolitana" },
+  { icon: Headphones, title: "Soporte técnico",    desc: "Pre y post venta con ingenieros certificados" },
+];
 
 export default function TrustBar() {
-  const t = useTranslations("trust");
-
-  const items = [
-    { icon: Clock,      title: t("years"),     desc: t("yearsDesc") },
-    { icon: Award,      title: t("certified"),  desc: t("certifiedDesc") },
-    { icon: Truck,      title: t("delivery"),   desc: t("deliveryDesc") },
-    { icon: Headphones, title: t("support"),    desc: t("supportDesc") },
-  ];
-
   return (
     <section className="bg-brand-navy py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
