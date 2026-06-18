@@ -20,7 +20,8 @@ export default async function ProductosPage() {
   return (
     <div className="pt-20">
       <Suspense fallback={null}>
-        <ProductsClient brands={brands} categories={categories} />
+        {/* Pass second-level categories (Networking, Cómputo, etc.) */}
+        <ProductsClient brands={brands} categories={categories[0]?.children ?? []} />
       </Suspense>
     </div>
   );

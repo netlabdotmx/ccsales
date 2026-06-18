@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProductCard from "@/components/products/ProductCard";
-import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import type { Product, Category } from "@/types";
 
 interface Brand { id: number; name: string; slug: string; }
@@ -155,15 +155,23 @@ export default function ProductsClient({
                     Todas
                   </button>
                   {categories.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => setParam("categ", String(c.id))}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                        categ === String(c.id) ? "bg-brand-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
-                      }`}
-                    >
-                      {c.name} {c.product_count > 0 && <span className="opacity-60">({c.product_count})</span>}
-                    </button>
+                    <div key={c.id} className="flex items-center gap-1">
+                      <button
+                        onClick={() => setParam("categ", String(c.id))}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          categ === String(c.id) ? "bg-brand-navy text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-slate-300"
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                      <a
+                        href={`/categorias/${c.id}`}
+                        title={`Explorar ${c.name}`}
+                        className="w-5 h-5 flex items-center justify-center rounded-full text-slate-400 hover:text-brand-navy transition-colors"
+                      >
+                        <LayoutGrid className="w-3 h-3" />
+                      </a>
+                    </div>
                   ))}
                 </div>
               </div>

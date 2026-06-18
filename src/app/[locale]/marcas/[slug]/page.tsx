@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { getBrands, getBrandProducts, odooImageUrl } from "@/lib/odoo";
+import { getBrands, getCategories, odooImageUrl } from "@/lib/odoo";
 import { brands as staticBrands } from "@/lib/data";
-import ProductCard from "@/components/products/ProductCard";
+import BrandProductsClient from "@/components/products/BrandProductsClient";
 import { Link } from "@/i18n/navigation";
-import { ChevronLeft, BadgeCheck, Package } from "lucide-react";
+import { ChevronLeft, BadgeCheck } from "lucide-react";
 import type { Metadata } from "next";
+import type { Category } from "@/types";
 
 interface Props {
   params: Promise<{ locale: string; slug: string }>;
@@ -17,6 +18,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: staticBrand?.name ?? slug,
     description: staticBrand?.description,
   };
+}
+
+/** Flatten all categories from a tree node */
+function flattenCategories(cats: Category[]): Category[] {
+  return cats.flatMap((c) => [c, ...flattenCategories(c.children ?? [])]);
 }
 
 export default async function MarcaDetailPage({ params }: Props) {
@@ -34,7 +40,7 @@ export default async function MarcaDetailPage({ params }: Props) {
     if (found) {
       brandId = found.id;
       brandName = found.name;
-      partnerLevel = found.partner_level || undefined;
+      partnerLevel = found.partner_level ?? undefined;
       logoUrl = odooImageUrl("product.brand", found.id, "logo");
     }
   } catch { /* use static */ }
@@ -43,14 +49,27 @@ export default async function MarcaDetailPage({ params }: Props) {
   if (!brandId && !staticBrand) notFound();
 
   if (!brandId) {
-    // brand exists in static data but not yet in Odoo — still render page
     brandName = staticBrand!.name;
     partnerLevel = staticBrand!.partnerLevel;
   }
 
-  // Fetch products for this brand
-  const result = await getBrandProducts(slug, { limit: 48 }).catch(() => ({ products: [], total: 0, page: 1, pages: 0 }));
-  const products = result.products;
+  // Fetch full category tree and find the node that matches this brand
+  let brandCategories: Category[] = [];
+  try {
+    const tree = await getCategories();
+    const all = flattenCategories(tree);
+    // Find the brand node by name (case-insensitive)
+    const brandNode = all.find(
+      (c) => c.name.toLowerCase() === brandName.toLowerCase()
+        || c.name.toLowerCase() === slug.replace(/-/g, " ").toLowerCase()
+    );
+    if (brandNode?.children?.length) {
+      brandCategories = brandNode.children;
+    } else {
+      // fallback: show second-level categories (Networking, Cómputo, etc.)
+      brandCategories = tree[0]?.children ?? [];
+    }
+  } catch { /* no categories filter */ }
 
   return (
     <div className="pt-20">
@@ -92,33 +111,9 @@ export default async function MarcaDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Products */}
+      {/* Products with filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-bold text-brand-navy">
-            Productos de {brandName}
-          </h2>
-          <span className="text-sm text-slate-400">{products.length} productos</span>
-        </div>
-
-        {products.length === 0 ? (
-          <div className="text-center py-20">
-            <Package className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-            <p className="text-slate-400">No hay productos disponibles para esta marca aún.</p>
-            <Link
-              href="/productos"
-              className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-full bg-brand-navy text-white text-sm font-semibold hover:bg-brand-navy-light transition-colors"
-            >
-              Ver todo el catálogo
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        )}
+        <BrandProductsClient brandSlug={slug} categories={brandCategories} />
       </div>
     </div>
   );
