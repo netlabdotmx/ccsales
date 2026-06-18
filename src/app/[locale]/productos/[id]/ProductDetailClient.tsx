@@ -74,7 +74,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
             }}
           />
           {/* No image fallback */}
-          <div className="absolute inset-0 flex items-center justify-center -z-0">
+          <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: -1 }}>
             <Package className="w-24 h-24 text-slate-200" />
           </div>
         </div>
