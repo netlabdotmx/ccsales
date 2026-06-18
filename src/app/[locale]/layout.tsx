@@ -5,6 +5,7 @@ import { routing } from "@/i18n/routing";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import WhatsAppFab from "@/components/layout/WhatsAppFab";
+import { getBrands, odooImageUrl } from "@/lib/odoo";
 import type { Metadata } from "next";
 
 interface LocaleLayoutProps {
@@ -40,9 +41,20 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
 
+  // Fetch Odoo brands for dynamic navbar
+  const odooBrands = await getBrands().catch(() => []);
+  const navBrands = odooBrands.map((b) => ({
+    id: b.id,
+    slug: b.slug,
+    name: b.name,
+    logo: odooImageUrl("product.brand", b.id, "logo"),
+    description: "",
+    partnerLevel: b.partner_level || undefined,
+  }));
+
   return (
     <NextIntlClientProvider messages={messages}>
-      <Navbar />
+      <Navbar brands={navBrands.length ? navBrands : undefined} />
       <main className="flex-1">{children}</main>
       <Footer />
       <WhatsAppFab />

@@ -1,16 +1,36 @@
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { brands } from "@/lib/data";
+import { brands as staticBrands } from "@/lib/data";
+import { getBrands, odooImageUrl } from "@/lib/odoo";
 import { ArrowRight, BadgeCheck } from "lucide-react";
 
 const brandColors: Record<string, string> = {
   cisco: "#00BCEB", meraki: "#00BCEB", fortinet: "#EE3124",
-  aruba: "#FF6800", hpe: "#01A982",
+  aruba: "#FF6800", hpe: "#01A982", lenovo: "#E2231A",
+  extreme: "#7B2D8B", zebra: "#1A1A1A",
 };
 
-export default function FeaturedBrands() {
-  const t = useTranslations("brands");
-  const featured = brands.filter((b) => b.featured).slice(0, 4);
+export default async function FeaturedBrands() {
+  const t = await getTranslations("brands");
+
+  // Fetch from Odoo, fall back to static
+  const odooBrands = await getBrands().catch(() => []);
+
+  const featured = odooBrands.length > 0
+    ? odooBrands.slice(0, 4).map((b) => ({
+        slug: b.slug,
+        name: b.name,
+        logo: odooImageUrl("product.brand", b.id, "logo"),
+        partnerLevel: b.partner_level || undefined,
+        description: staticBrands.find((s) => s.slug === b.slug)?.description ?? "",
+      }))
+    : staticBrands.filter((b) => b.featured).slice(0, 4).map((b) => ({
+        slug: b.slug,
+        name: b.name,
+        logo: b.logo,
+        partnerLevel: b.partnerLevel,
+        description: b.description,
+      }));
 
   return (
     <section className="bg-white py-20 lg:py-24">

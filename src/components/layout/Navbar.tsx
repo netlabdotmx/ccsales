@@ -5,7 +5,16 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useCartStore } from "@/store/cart";
-import { brands, solutions } from "@/lib/data";
+import { brands as staticBrands, solutions } from "@/lib/data";
+
+interface NavBrand {
+  id: number;
+  slug: string;
+  name: string;
+  logo: string;
+  description: string;
+  partnerLevel?: string;
+}
 import {
   Menu, X, ShoppingCart, Globe, ChevronDown,
   ShieldCheck, Network, Wifi, Server, HardDrive, Monitor,
@@ -16,7 +25,7 @@ const solutionIcons: Record<string, React.ElementType> = {
   servidores: Server, almacenamiento: HardDrive, computo: Monitor,
 };
 
-export default function Navbar() {
+export default function Navbar({ brands: odooBrands }: { brands?: NavBrand[] }) {
   const t = useTranslations();
   const pathname = usePathname();
   const totalItems = useCartStore((s) => s.totalItems());
@@ -46,7 +55,18 @@ export default function Navbar() {
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
   const isDark = !scrolled && !mobileOpen;
-  const featuredBrands = brands.filter((b) => b.featured);
+
+  // Use Odoo brands if available, fall back to static data
+  const featuredBrands: NavBrand[] = odooBrands && odooBrands.length > 0
+    ? odooBrands.slice(0, 8)
+    : staticBrands.filter((b) => b.featured).map((b, i) => ({
+        id: i + 1,
+        slug: b.slug,
+        name: b.name,
+        logo: b.logo,
+        description: b.description,
+        partnerLevel: b.partnerLevel,
+      }));
 
   return (
     <header
