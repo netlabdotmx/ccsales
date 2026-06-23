@@ -6,26 +6,30 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCartStore } from "@/store/cart";
-import { buildWhatsAppUrl, buildLeadDescription } from "@/lib/whatsapp";
+import { buildWhatsAppUrl } from "@/lib/whatsapp";
 import { Link } from "@/i18n/navigation";
-import { Trash2, Plus, Minus, MessageCircle, ShoppingCart, ArrowLeft } from "lucide-react";
+import {
+  Trash2, Plus, Minus, MessageCircle, ShoppingCart, ArrowLeft,
+  CheckCircle, FileText, AlertCircle,
+} from "lucide-react";
 import type { CustomerInfo } from "@/types";
 
 const CustomerSchema = z.object({
-  name: z.string().min(2, "Mínimo 2 caracteres"),
+  name:    z.string().min(2, "Mínimo 2 caracteres"),
   company: z.string().min(2, "Mínimo 2 caracteres"),
-  email: z.email("Correo inválido"),
-  phone: z.string().min(8, "Teléfono inválido"),
-  rfc: z.string().optional(),
-  notes: z.string().optional(),
+  email:   z.email("Correo inválido"),
+  phone:   z.string().min(8, "Teléfono inválido"),
+  rfc:     z.string().optional(),
+  notes:   z.string().optional(),
 });
 type CustomerForm = z.infer<typeof CustomerSchema>;
 
 export default function CartPage() {
   const t = useTranslations("cart");
-  const { items, updateQuantity, removeItem, totalPrice, clearCart } = useCartStore();
+  const { items, updateQuantity, removeItem, totalPrice, clearCart, setLastOrder, lastOrder } = useCartStore();
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
+  const [sent, setSent]       = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<CustomerForm>({
     resolver: zodResolver(CustomerSchema),
@@ -33,22 +37,59 @@ export default function CartPage() {
 
   const onSubmit = async (data: CustomerForm) => {
     setSending(true);
+    setError(null);
+
     const customer: CustomerInfo = data;
-    const description = buildLeadDescription(items, customer);
-    const waUrl = buildWhatsAppUrl(items, customer);
 
-    // Create lead in Odoo (fire and forget — don't block WA opening)
-    fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, description }),
-    }).catch(() => { /* silent — WA message is the primary channel */ });
+    try {
+      // Create order in Odoo
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          partner: {
+            email:   data.email,
+            name:    data.name,
+            phone:   data.phone,
+            company: data.company,
+          },
+          lines: items.map((item) => ({
+            product_id: item.product.id,
+            qty:        item.quantity,
+            note:       data.notes,
+          })),
+          client_ref: data.rfc ? `RFC: ${data.rfc}` : undefined,
+          note:       data.notes,
+        }),
+      });
 
-    // Open WhatsApp
-    window.open(waUrl, "_blank", "noopener,noreferrer");
-    setSent(true);
-    setSending(false);
-    clearCart();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+
+      const { order } = await res.json();
+
+      // Save order token for later lookup
+      setLastOrder({
+        id:          order.id,
+        name:        order.name,
+        accessToken: order.access_token,
+        total:       order.amount_total,
+        currency:    order.currency,
+      });
+
+      // Open WhatsApp with order details (secondary channel)
+      const waUrl = buildWhatsAppUrl(items, customer, order.name);
+      window.open(waUrl, "_blank", "noopener,noreferrer");
+
+      setSent(true);
+      clearCart();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al enviar la orden");
+    } finally {
+      setSending(false);
+    }
   };
 
   if (items.length === 0 && !sent) {
@@ -70,14 +111,30 @@ export default function CartPage() {
     );
   }
 
-  if (sent) {
+  if (sent && lastOrder) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
         <div className="w-20 h-20 rounded-full bg-brand-green/15 flex items-center justify-center mb-6">
-          <MessageCircle className="w-10 h-10 text-brand-green" />
+          <CheckCircle className="w-10 h-10 text-brand-green" />
         </div>
         <h1 className="text-2xl font-bold text-brand-navy mb-2">{t("success")}</h1>
-        <p className="text-slate-500 mb-8">{t("successDesc")}</p>
+        <p className="text-slate-500 mb-4">{t("successDesc")}</p>
+
+        {/* Order reference */}
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-navy/5 border border-brand-navy/10 mb-8">
+          <FileText className="w-4 h-4 text-brand-navy shrink-0" />
+          <span className="text-sm font-semibold text-brand-navy">
+            Cotización {lastOrder.name}
+          </span>
+          <span className="text-sm text-slate-500">
+            — ${lastOrder.total.toLocaleString("es-MX")} {lastOrder.currency}
+          </span>
+        </div>
+
+        <p className="text-xs text-slate-400 mb-8 max-w-sm">
+          Tu asesor de ventas revisará la cotización y te contactará por WhatsApp para confirmar disponibilidad y tiempos de entrega.
+        </p>
+
         <Link
           href="/productos"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-navy text-white font-semibold text-sm hover:bg-brand-navy-light transition-colors"
@@ -100,7 +157,6 @@ export default function CartPage() {
               key={product.id}
               className="flex gap-4 p-5 rounded-2xl border border-slate-100 bg-white hover:border-slate-200 transition-colors"
             >
-              {/* Product info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -112,7 +168,7 @@ export default function CartPage() {
                   </div>
                   <button
                     onClick={() => removeItem(product.id)}
-                    className="text-slate-300 hover:text-red-400 transition-colors flex-shrink-0"
+                    className="text-slate-300 hover:text-red-400 transition-colors shrink-0"
                     aria-label={t("remove")}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -120,7 +176,6 @@ export default function CartPage() {
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">
-                  {/* Qty control */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => updateQuantity(product.id, quantity - 1)}
@@ -137,10 +192,9 @@ export default function CartPage() {
                     </button>
                   </div>
 
-                  {/* Price */}
                   <div className="text-right">
                     <p className="text-xs text-slate-400">
-                      ${selectedTier.price.toLocaleString("es-MX")} {t("pricePerUnit", { ns: "products" })}
+                      ${selectedTier.price.toLocaleString("es-MX")} c/u
                     </p>
                     <p className="font-bold text-brand-navy">
                       ${(quantity * selectedTier.price).toLocaleString("es-MX")}
@@ -151,7 +205,6 @@ export default function CartPage() {
             </div>
           ))}
 
-          {/* Price tiers info */}
           <div className="p-4 rounded-xl bg-brand-green/5 border border-brand-green/20">
             <p className="text-xs text-brand-navy font-medium">
               💡 Los precios se actualizan automáticamente según el volumen seleccionado.
@@ -176,6 +229,7 @@ export default function CartPage() {
               <span>{t("total")}</span>
               <span className="text-brand-green">${totalPrice().toLocaleString("es-MX")}</span>
             </div>
+            <p className="text-[11px] text-slate-400 mt-2">* Precios sin IVA. El total final incluye impuestos.</p>
           </div>
 
           {/* Customer form */}
@@ -213,14 +267,24 @@ export default function CartPage() {
               />
             </div>
 
+            {error && (
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-100">
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-red-600">{error}</p>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={sending}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full bg-[#25D366] hover:bg-[#20BD5C] text-white font-bold text-sm transition-colors disabled:opacity-60"
             >
               <MessageCircle className="w-5 h-5" />
-              {sending ? t("sendingLead") : t("sendWhatsapp")}
+              {sending ? "Creando cotización…" : t("sendWhatsapp")}
             </button>
+            <p className="text-[11px] text-slate-400 text-center">
+              Se creará una cotización en nuestro sistema y te contactaremos por WhatsApp.
+            </p>
           </form>
         </div>
       </div>

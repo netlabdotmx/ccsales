@@ -1,8 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { brands as staticBrands } from "@/lib/data";
-import { getBrands, odooImageUrl } from "@/lib/odoo";
+import { getBrands } from "@/lib/odoo";
 import { ArrowRight, BadgeCheck } from "lucide-react";
+
+const ODOO_BASE = process.env.ODOO_API_URL ?? "https://ccsales.netlab.mx";
 
 const brandColors: Record<string, string> = {
   cisco: "#00BCEB", meraki: "#00BCEB", fortinet: "#EE3124",
@@ -17,20 +19,20 @@ export default async function FeaturedBrands() {
 
   const featured = odooBrands.length > 0
     ? odooBrands.slice(0, 6).map((b) => ({
-        slug: b.slug,
-        name: b.name,
-        logo: odooImageUrl("product.brand", b.id, "logo"),
+        slug:         b.slug,
+        name:         b.name,
+        logo:         `${ODOO_BASE}${b.logo_url}`,
         partnerLevel: b.partner_level ?? undefined,
-        description: staticBrands.find((s) => s.slug === b.slug)?.description ?? "",
-        color: brandColors[b.slug] ?? "#003845",
+        description:  staticBrands.find((s) => s.slug === b.slug)?.description ?? "",
+        color:        brandColors[b.slug] ?? "#003845",
       }))
     : staticBrands.filter((b) => b.featured).slice(0, 6).map((b) => ({
-        slug: b.slug,
-        name: b.name,
-        logo: b.logo,
+        slug:         b.slug,
+        name:         b.name,
+        logo:         b.logo,
         partnerLevel: b.partnerLevel,
-        description: b.description,
-        color: brandColors[b.slug] ?? "#003845",
+        description:  b.description,
+        color:        brandColors[b.slug] ?? "#003845",
       }));
 
   return (
@@ -58,7 +60,6 @@ export default async function FeaturedBrands() {
               href={`/marcas/${brand.slug}` as never}
               className="group flex flex-col items-center p-5 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-lg transition-all duration-300 bg-white text-center"
             >
-              {/* Logo */}
               <div className="w-14 h-14 rounded-xl bg-slate-50 flex items-center justify-center mb-3 group-hover:bg-white transition-colors">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -68,7 +69,6 @@ export default async function FeaturedBrands() {
                 />
               </div>
 
-              {/* Accent bar */}
               <div
                 className="w-8 h-0.5 rounded-full mb-2 opacity-60 group-hover:opacity-100 group-hover:w-12 transition-all duration-300"
                 style={{ backgroundColor: brand.color }}
@@ -93,4 +93,3 @@ export default async function FeaturedBrands() {
     </section>
   );
 }
-

@@ -9,6 +9,7 @@ function getBestTier(product: Product, quantity: number): PriceTier {
     .filter((t) => quantity >= t.minQty)
     .sort((a, b) => b.minQty - a.minQty);
   return applicable[0] ?? {
+    id: 0,
     minQty: 1,
     maxQty: null,
     price: product.listPrice,
@@ -16,13 +17,23 @@ function getBestTier(product: Product, quantity: number): PriceTier {
   };
 }
 
+interface LastOrder {
+  id: number;
+  name: string;
+  accessToken: string;
+  total: number;
+  currency: string;
+}
+
 interface CartStore {
   items: CartItem[];
   customer: CustomerInfo | null;
+  lastOrder: LastOrder | null;
   addItem: (product: Product, quantity?: number) => void;
   removeItem: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
   setCustomer: (info: CustomerInfo) => void;
+  setLastOrder: (order: LastOrder) => void;
   clearCart: () => void;
   totalItems: () => number;
   totalPrice: () => number;
@@ -33,6 +44,7 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       customer: null,
+      lastOrder: null,
 
       addItem: (product, quantity = 1) => {
         set((state) => {
@@ -86,6 +98,8 @@ export const useCartStore = create<CartStore>()(
       },
 
       setCustomer: (info) => set({ customer: info }),
+
+      setLastOrder: (order) => set({ lastOrder: order }),
 
       clearCart: () => set({ items: [], customer: null }),
 

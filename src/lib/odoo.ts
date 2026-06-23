@@ -1,12 +1,11 @@
 /**
  * Odoo REST API client — server-side only.
- * Consumes the custom /api/* endpoints from cc_store_channels controller.
- * Base URL: https://odoo.ccsales.com.mx
+ * Base URL: https://ccsales.netlab.mx
  */
 
-import type { Product, PriceTier, Category } from "@/types";
+import type { Product, PriceTier, Category, Order } from "@/types";
 
-const ODOO_API = process.env.ODOO_API_URL ?? "https://odoo.ccsales.com.mx";
+const ODOO_API = process.env.ODOO_API_URL ?? "https://ccsales.netlab.mx";
 const CHANNEL  = process.env.ODOO_CHANNEL  ?? "ccsales";
 
 // ─── Core fetch ──────────────────────────────────────────────
@@ -23,8 +22,14 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
 // ─── Image URL helper ─────────────────────────────────────────
 
-export function odooImageUrl(model: string, id: number, field = "image_1920") {
-  return `${ODOO_API}/web/image/${model}/${id}/${field}`;
+export function odooImageUrl(path: string): string;
+export function odooImageUrl(model: string, id: number, field?: string): string;
+export function odooImageUrl(modelOrPath: string, id?: number, field = "image_1920"): string {
+  if (id === undefined) {
+    // Called with a relative path directly (e.g. from API response)
+    return modelOrPath.startsWith("http") ? modelOrPath : `${ODOO_API}${modelOrPath}`;
+  }
+  return `${ODOO_API}/web/image/${modelOrPath}/${id}/${field}`;
 }
 
 // ─── Mappers ─────────────────────────────────────────────────
@@ -32,15 +37,19 @@ export function odooImageUrl(model: string, id: number, field = "image_1920") {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapProduct(raw: any): Product {
   const base = ODOO_API;
-  // List endpoint: image_url (relative path). Detail endpoint: images.medium/large
   const imgMedium = raw.images?.medium
     ? `${base}${raw.images.medium}`
     : raw.image_url
       ? `${base}${raw.image_url}`
-      : odooImageUrl("product.template", raw.id, "image_512");
+      : `${base}/web/image/product.template/${raw.id}/image_512`;
   const imgLarge = raw.images?.large
     ? `${base}${raw.images.large}`
-    : odooImageUrl("product.template", raw.id, "image_1920");
+    : `${base}/web/image/product.template/${raw.id}/image_1920`;
+  const imgThumb = raw.images?.thumb
+    ? `${base}${raw.images.thumb}`
+    : raw.image_thumb
+      ? `${base}${raw.image_thumb}`
+      : `${base}/web/image/product.template/${raw.id}/image_128`;
 
   return {
     id:               raw.id,
@@ -54,9 +63,11 @@ function mapProduct(raw: any): Product {
     listPrice:        raw.price ?? raw.list_price ?? 0,
     priceTiers:       (raw.price_tiers ?? []).map(mapPriceTier),
     imageUrl:         imgMedium,
+    imageThumbUrl:    imgThumb,
     imageFullUrl:     imgLarge,
     condition:        raw.condition || "new",
     stock:            raw.stock_qty ?? (raw.in_stock ? 999 : 0),
+    inStock:          raw.in_stock ?? (raw.stock_qty > 0),
     featured:         raw.featured ?? false,
     specs:            raw.specs ?? {},
     categoryId:       raw.category?.id   ?? null,
@@ -120,7 +131,6 @@ export async function searchProducts(params: SearchParams): Promise<SearchResult
 
 export async function getProduct(id: number): Promise<Product | null> {
   try {
-    // The endpoint returns the product object directly (no wrapper key)
     const data = await apiFetch<Record<string, unknown>>(`/api/products/${id}`);
     return data.id ? mapProduct(data) : null;
   } catch {
@@ -135,11 +145,13 @@ export interface ApiBrand {
   name:          string;
   slug:          string;
   partner_level: string | null;
-  logo:          string;
+  product_count: number;
+  logo_url:      string;
+  logo_dark_url: string;
 }
 
 export async function getBrands(channel?: string): Promise<ApiBrand[]> {
-  const q = channel ? `?channel=${channel}` : `?channel=${CHANNEL}`;
+  const q = `?channel=${channel ?? CHANNEL}`;
   const data = await apiFetch<{ brands: ApiBrand[] }>(`/api/brands${q}`);
   return data.brands ?? [];
 }
@@ -149,11 +161,12 @@ export async function getBrandProducts(slug: string, params: SearchParams = {}):
   if (params.q)         p.set("q", params.q);
   if (params.condition) p.set("condition", params.condition);
   if (params.sort)      p.set("sort", params.sort ?? "newest");
+  p.set("channel", CHANNEL);
   p.set("limit", String(params.limit ?? 24));
   p.set("page",  String(params.page  ?? 1));
 
   const data = await apiFetch<{ products: unknown[]; pagination: { total: number; page: number; pages: number } }>(
-    `/api/brands/${slug}/products?channel=${CHANNEL}&${p}`
+    `/api/brands/${slug}/products?${p}`
   );
 
   return {
@@ -171,37 +184,41 @@ export async function getCategories(): Promise<Category[]> {
   return data.categories ?? [];
 }
 
-// ─── CRM Lead (still via JSON-RPC — no REST endpoint yet) ────
+// ─── Orders ──────────────────────────────────────────────────
 
-const ODOO_URL     = process.env.ODOO_URL     ?? "https://ccsales.netlab.mx";
-const ODOO_DB      = process.env.ODOO_DB      ?? "";
-const ODOO_UID     = Number(process.env.ODOO_UID     ?? "2");
-const ODOO_API_KEY = process.env.ODOO_API_KEY ?? "";
-
-export async function createLead(values: {
-  name: string;
-  contact_name: string;
-  email_from: string;
-  phone: string;
-  partner_name: string;
-  description: string;
-}): Promise<number> {
-  const res = await fetch(`${ODOO_URL}/jsonrpc`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0", method: "call", id: 1,
-      params: {
-        service: "object", method: "execute_kw",
-        args: [ODOO_DB, ODOO_UID, ODOO_API_KEY, "crm.lead", "create", [{ ...values, type: "lead" }]],
-      },
-    }),
-    cache: "no-store",
-  });
-  const json = await res.json();
-  if (json.error) throw new Error(`Odoo RPC: ${JSON.stringify(json.error)}`);
-  return json.result as number;
+export interface CreateOrderParams {
+  partner: { email: string; name: string; phone?: string; company?: string };
+  lines: Array<{ product_id: number; variant_id?: number; qty: number; note?: string }>;
+  client_ref?: string;
+  note?: string;
 }
 
-export { ODOO_URL, ODOO_API };
+export async function createOrder(params: CreateOrderParams): Promise<Order> {
+  const data = await apiFetch<{ order: Order }>("/api/orders", {
+    method: "POST",
+    body: JSON.stringify({
+      channel: CHANNEL,
+      partner: params.partner,
+      lines:   params.lines,
+      client_ref: params.client_ref,
+      note:       params.note,
+      confirm:    false,
+    }),
+  });
+  return data.order;
+}
 
+export async function getOrder(id: number, token: string): Promise<Order> {
+  return apiFetch<{ order: Order }>(`/api/orders/${id}?token=${encodeURIComponent(token)}`)
+    .then((d) => d.order);
+}
+
+export async function cancelOrder(id: number, token: string): Promise<Order> {
+  const data = await apiFetch<{ order: Order }>(`/api/orders/${id}/cancel`, {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+  return data.order;
+}
+
+export { ODOO_API };

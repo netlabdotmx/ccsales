@@ -8,7 +8,8 @@ const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "525618507997
  */
 export function buildWhatsAppUrl(
   items: CartItem[],
-  customer: CustomerInfo
+  customer: CustomerInfo,
+  orderName?: string
 ): string {
   const lines = items.map((item) => {
     const { product, quantity, selectedTier } = item;
@@ -35,6 +36,7 @@ export function buildWhatsAppUrl(
 
   const message = [
     `Hola, mi nombre es *${customer.name}* de *${customer.company}*.`,
+    orderName ? `Mi cotización es: *${orderName}*` : "",
     ``,
     `Me interesa cotizar los siguientes productos:`,
     ...lines,
