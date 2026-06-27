@@ -145,6 +145,7 @@ export interface ApiBrand {
   name:          string;
   slug:          string;
   partner_level: string | null;
+  description:   string;
   product_count: number;
   logo_url:      string;
   logo_dark_url: string;

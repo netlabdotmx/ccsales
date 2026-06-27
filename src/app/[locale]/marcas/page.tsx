@@ -1,4 +1,4 @@
-import { getBrands, odooImageUrl, searchProducts } from "@/lib/odoo";
+import { getBrands, odooImageUrl } from "@/lib/odoo";
 import { Link } from "@/i18n/navigation";
 import { BadgeCheck, ArrowRight } from "lucide-react";
 import { brands as staticBrands } from "@/lib/data";
@@ -25,23 +25,27 @@ export default async function MarcasPage() {
 
   // Merge: prefer Odoo brands, fall back to static
   const mergedBrands = oodooBrands.length > 0
-    ? oodooBrands.map((b) => ({
-        id: b.id,
-        slug: b.slug,
-        name: b.name,
-        logo: odooImageUrl("product.brand", b.id, "logo"),
-        partnerLevel: b.partner_level ?? undefined,
-        color: brandColors[b.slug] ?? "#003845",
-        fromOdoo: true,
-      }))
+    ? oodooBrands.map((b) => {
+        const slugLower = b.slug.toLowerCase();
+        const staticMatch = staticBrands.find((s) => s.slug === slugLower);
+        return {
+          id:           b.id,
+          slug:         b.slug,
+          name:         b.name,
+          logo:         odooImageUrl("product.brand", b.id, "logo"),
+          partnerLevel: b.partner_level ?? undefined,
+          description:  (b as { description?: string }).description || staticMatch?.description || "",
+          color:        brandColors[slugLower] ?? "#003845",
+        };
+      })
     : staticBrands.map((b, i) => ({
-        id: i + 1,
-        slug: b.slug,
-        name: b.name,
-        logo: b.logo,
+        id:           i + 1,
+        slug:         b.slug,
+        name:         b.name,
+        logo:         b.logo,
         partnerLevel: b.partnerLevel,
-        color: b.color,
-        fromOdoo: false,
+        description:  b.description,
+        color:        b.color,
       }));
 
   return (
@@ -70,20 +74,27 @@ export default async function MarcasPage() {
               href={`/marcas/${brand.slug}` as never}
               className="group flex flex-col p-6 rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-xl transition-all duration-300 bg-white"
             >
-              {/* Color accent */}
-              <div
-                className="h-1 rounded-full mb-5 opacity-60 group-hover:opacity-100 transition-opacity"
-                style={{ backgroundColor: brand.color }}
-              />
-
-              <div className="flex items-start justify-between mb-3">
-                <h2 className="text-xl font-bold text-brand-navy group-hover:text-brand-cyan transition-colors">
-                  {brand.name}
-                </h2>
+              {/* Logo + color accent */}
+              <div className="flex items-center justify-between mb-5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={brand.logo}
+                  alt={brand.name}
+                  className="h-10 w-auto max-w-[120px] object-contain"
+                />
                 {brand.partnerLevel && (
                   <BadgeCheck className="w-5 h-5 text-brand-green flex-shrink-0" />
                 )}
               </div>
+
+              <div
+                className="h-0.5 rounded-full mb-4 opacity-50 group-hover:opacity-100 transition-opacity"
+                style={{ backgroundColor: brand.color }}
+              />
+
+              <h2 className="text-lg font-bold text-brand-navy group-hover:text-brand-cyan transition-colors mb-1">
+                {brand.name}
+              </h2>
 
               {brand.partnerLevel && (
                 <p className="text-[11px] font-semibold text-brand-cyan uppercase tracking-wide mb-3">
@@ -91,17 +102,13 @@ export default async function MarcasPage() {
                 </p>
               )}
 
-              {/* Static description from data.ts */}
-              {(() => {
-                const s = staticBrands.find((b) => b.slug === brand.slug);
-                return s ? (
-                  <p className="text-sm text-slate-500 leading-relaxed line-clamp-3 flex-1">
-                    {s.description}
-                  </p>
-                ) : (
-                  <div className="flex-1" />
-                );
-              })()}
+              {brand.description ? (
+                <p className="text-sm text-slate-500 leading-relaxed line-clamp-3 flex-1">
+                  {brand.description}
+                </p>
+              ) : (
+                <div className="flex-1" />
+              )}
 
               <div className="mt-5 flex items-center gap-1 text-sm font-semibold text-brand-navy group-hover:text-brand-cyan transition-colors">
                 Ver productos <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
